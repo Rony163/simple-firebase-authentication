@@ -1,18 +1,19 @@
 import './App.css';
-import { getAuth, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
+import { getAuth, signInWithPopup, GoogleAuthProvider, GithubAuthProvider, signOut } from "firebase/auth";
 import initializeAuthentication from './Firebase/firebase.initialize';
 import { useState } from 'react';
 
 initializeAuthentication();
 
-const provider = new GoogleAuthProvider();
+const googleProvider = new GoogleAuthProvider();
+const gitHubProvider = new GithubAuthProvider();
 
 function App() {
   const [user, setUser] = useState({});
+  const auth = getAuth();
 
   const handleGoogleSignIn = () => {
-    const auth = getAuth();
-    signInWithPopup(auth, provider)
+    signInWithPopup(auth, googleProvider)
       .then(result => {
         const { displayName, email, photoURL } = result.user;
         const loggedInUser = {
@@ -26,12 +27,42 @@ function App() {
         console.log(error.message);
       })
   }
+
+  const handleGithubSignIn = () => {
+    signInWithPopup(auth, gitHubProvider)
+      .then(result => {
+        // console.log(result.user);
+        const { displayName, photoURL, email } = result.user;
+        const loggedInUser = {
+          name: displayName,
+          email: email,
+          photo: photoURL
+        }
+        setUser(loggedInUser);
+      })
+  }
+
+  const handleSignOut = () => {
+    signOut(auth)
+      .then(() => {
+        setUser({});
+      })
+  }
+
   return (
     <div className="App">
-      <button onClick={handleGoogleSignIn}>Google Sign In</button>
+      {
+        !user.name ?
+          <div>
+            <button onClick={handleGoogleSignIn}>Google Sign In</button>
+            <button onClick={handleGithubSignIn}>Github Sign In</button>
+          </div>
+          :
+          <button onClick={handleSignOut}>Sign Out</button>
+      }
       <br />
       {
-        user.email && <div>
+        user.name && <div>
           <h2>Welcome {user.name}</h2>
           <p>Your email: {user.email}</p>
           <img src={user.photo} alt="" />
